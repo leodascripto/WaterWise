@@ -5,14 +5,15 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Image,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   navigation: any;
@@ -42,6 +43,9 @@ const welcomeData = [
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const pagerRef = useRef<PagerView>(null);
+  
+  // ✅ NOVO: Hook para safe areas
+  const insets = useSafeAreaInsets();
 
   const handleNext = () => {
     if (currentPage < welcomeData.length - 1) {
@@ -62,13 +66,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
         style={styles.gradient}
       >
         {/* Header with Skip button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { marginTop: Platform.OS === 'ios' ? 10 : 20 }]}>
           <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
             <Text style={styles.skipText}>Pular</Text>
           </TouchableOpacity>
@@ -121,24 +125,26 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Next/Get Started Button */}
-        <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-          <LinearGradient
-            colors={['#00FFCC', '#00D4AA']}
-            style={styles.nextButtonGradient}
-          >
-            <Text style={styles.nextButtonText}>
-              {currentPage === welcomeData.length - 1 ? 'Começar' : 'Próximo'}
-            </Text>
-            <Ionicons
-              name="arrow-forward"
-              size={20}
-              color="#1A1A1A"
-              style={styles.nextButtonIcon}
-            />
-          </LinearGradient>
-        </TouchableOpacity>
+        <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 20 }]}>
+          <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+            <LinearGradient
+              colors={['#00FFCC', '#00D4AA']}
+              style={styles.nextButtonGradient}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentPage === welcomeData.length - 1 ? 'Começar' : 'Próximo'}
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={20}
+                color="#1A1A1A"
+                style={styles.nextButtonIcon}
+              />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -154,7 +160,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
-    paddingTop: 20,
   },
   skipButton: {
     paddingHorizontal: 16,
@@ -227,9 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#00FFCC',
     width: 24,
   },
+  // ✅ ATUALIZADO: Container do botão com safe area
+  buttonContainer: {
+    paddingHorizontal: 20,
+  },
   nextButton: {
-    marginHorizontal: 20,
-    marginBottom: 40,
     borderRadius: 25,
     overflow: 'hidden',
   },
