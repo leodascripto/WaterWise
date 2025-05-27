@@ -220,7 +220,7 @@ O app utiliza Context API para gerenciamento de estado de autenticação:
 
 - **Nome do Grupo**: [Inserir nome]
 - **Integrantes**: [Inserir nomes e RMs]
-- **Turma**: 2TDS - Agosto 2025
+- **Turma**: 2TDSPS - Agosto 2025
 
 ## 📞 Suporte
 
