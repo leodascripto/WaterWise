@@ -29,6 +29,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   register: (userData: any, propertyData: any) => Promise<boolean>;
   updateUser: (userData: Partial<User>) => Promise<void>;
+  quickLogin: () => Promise<boolean>; // Adicionar função de login rápido
   loading: boolean;
 }
 
@@ -153,6 +154,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const quickLogin = async (): Promise<boolean> => {
+    try {
+      // Mock user data para desenvolvimento
+      const mockUser: User = {
+        id: 1,
+        nome: 'Usuário Teste',
+        email: 'teste@waterwise.com',
+        telefone: '11999999999',
+        status: 'ATIVO',
+        last_login: new Date().toISOString(),
+      };
+
+      const mockProperty: Property = {
+        id: 1,
+        nome: 'Fazenda São João',
+        endereco: 'Rua das Águas, 123',
+        cidade: 'São Paulo',
+        estado: 'SP',
+        cep: '01234-567',
+        area_total: 50.5,
+        usuario_id: 1,
+      };
+
+      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+      await AsyncStorage.setItem('property', JSON.stringify(mockProperty));
+      
+      setUser(mockUser);
+      setProperty(mockProperty);
+      
+      return true;
+    } catch (error) {
+      console.error('Quick login error:', error);
+      return false;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     property,
@@ -161,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     register,
     updateUser,
+    quickLogin,
     loading,
   };
 

@@ -1,29 +1,49 @@
 {
   "expo": {
     "name": "WaterWise",
-    "slug": "WaterWise",
+    "slug": "waterwise",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A1A1A"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fiap.waterwise"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1A1A1A"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.fiap.waterwise",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O WaterWise precisa acessar suas fotos para você definir sua foto de perfil.",
+          "cameraPermission": "O WaterWise precisa acessar sua câmera para você tirar sua foto de perfil."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
     }
   }
 }
