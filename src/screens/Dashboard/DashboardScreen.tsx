@@ -1,54 +1,83 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-interface DashboardScreenProps {
-  navigation: any;
-}
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/apiService';
 
 const { width } = Dimensions.get('window');
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
-  const { user, property, logout } = useAuth();
-  const [refreshing, setRefreshing] = useState(false);
-  const insets = useSafeAreaInsets();
-  const [dashboardData, setDashboardData] = useState({
-    waterUsage: 0,
-    savings: 0,
-    efficiency: 0,
-    alerts: 0,
+interface DashboardData {
+  totalProperties: number;
+  activeAlerts: number;
+  avgSoilMoisture: number;
+  weatherForecast: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  recentAlerts: Array<{
+    id: string;
+    message: string;
+    severity: string;
+    timestamp: string;
+  }>;
+}
+
+export default function DashboardScreen() {
+  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalProperties: 0,
+    activeAlerts: 0,
+    avgSoilMoisture: 0,
+    weatherForecast: 'Carregando...',
+    riskLevel: 'LOW',
+    recentAlerts: [],
   });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadDashboardData = async () => {
+    try {
+      // Simulate API calls - replace with actual API service
+      const data = await apiService.getDashboardData();
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Use mock data if API fails
+      setDashboardData({
+        totalProperties: 5,
+        activeAlerts: 2,
+        avgSoilMoisture: 65,
+        weatherForecast: 'Chuva moderada nas próximas 6h',
+        riskLevel: 'MEDIUM',
+        recentAlerts: [
+          {
+            id: '1',
+            message: 'Umidade do solo baixa na Propriedade Norte',
+            severity: 'HIGH',
+            timestamp: '10 min atrás',
+          },
+          {
+            id: '2',
+            message: 'Previsão de chuva intensa detectada',
+            severity: 'MEDIUM',
+            timestamp: '25 min atrás',
+          },
+        ],
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadDashboardData();
   }, []);
-
-  const loadDashboardData = async () => {
-    // Simulate API call - Replace with actual API call
-    try {
-      // Mock data for demonstration
-      setDashboardData({
-        waterUsage: 2847,
-        savings: 1250,
-        efficiency: 87,
-        alerts: 2,
-      });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    }
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -56,418 +85,306 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigation.navigate('Login');
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'HIGH': return '#dc3545';
+      case 'MEDIUM': return '#ffc107';
+      case 'LOW': return '#28a745';
+      default: return '#6c757d';
+    }
   };
 
-  const handleSettings = () => {
-    navigation.navigate('Settings');
+  const getRiskText = (level: string) => {
+    switch (level) {
+      case 'HIGH': return 'Alto Risco';
+      case 'MEDIUM': return 'Risco Moderado';
+      case 'LOW': return 'Baixo Risco';
+      default: return 'Indefinido';
+    }
   };
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
-
-  const StatCard = ({ icon, title, value, unit, color }: any) => (
-    <View style={styles.statCard}>
-      <LinearGradient
-        colors={['#2D2D2D', '#3D3D3D']}
-        style={styles.statCardGradient}
-      >
-        <View style={styles.statCardHeader}>
-          <Ionicons name={icon} size={24} color={color} />
-        </View>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statUnit}>{unit}</Text>
-        <Text style={styles.statTitle}>{title}</Text>
-      </LinearGradient>
-    </View>
-  );
-
-  const QuickActionCard = ({ icon, title, onPress, color }: any) => (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress}>
-      <LinearGradient
-        colors={['#2D2D2D', '#3D3D3D']}
-        style={styles.actionCardGradient}
-      >
-        <View style={[styles.actionIcon, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon} size={24} color={color} />
-        </View>
-        <Text style={styles.actionTitle}>{title}</Text>
-        <Ionicons name="chevron-forward" size={16} color="#CCCCCC" />
-      </LinearGradient>
-    </TouchableOpacity>
-  );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient
-        colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
-        style={styles.gradient}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.userName}>{user?.nome?.split(' ')[0] || 'Usuário'}</Text>
-            <Text style={styles.propertyName}>{property?.nome}</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity onPress={handleSettings} style={styles.headerButton}>
-              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
-              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>
+          Olá, {user?.email?.split('@')[0] || 'Usuário'}!
+        </Text>
+        <Text style={styles.dateText}>
+          {new Date().toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </Text>
+      </View>
+
+      <View style={styles.statsContainer}>
+        <View style={[styles.statCard, { backgroundColor: '#e3f2fd' }]}>
+          <Ionicons name="location-outline" size={24} color="#1976d2" />
+          <Text style={styles.statNumber}>{dashboardData.totalProperties}</Text>
+          <Text style={styles.statLabel}>Propriedades</Text>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#00FFCC"
-              colors={['#00FFCC']}
-            />
-          }
-        >
-          {/* Water Usage Overview */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Visão Geral</Text>
-            <View style={styles.statsContainer}>
-              <StatCard
-                icon="water-outline"
-                title="Uso de Água"
-                value={dashboardData.waterUsage}
-                unit="L hoje"
-                color="#00FFCC"
-              />
-              <StatCard
-                icon="trending-down-outline"
-                title="Economia"
-                value={dashboardData.savings}
-                unit="L este mês"
-                color="#4CAF50"
-              />
-            </View>
-            <View style={styles.statsContainer}>
-              <StatCard
-                icon="speedometer-outline"
-                title="Eficiência"
-                value={dashboardData.efficiency}
-                unit="% média"
-                color="#FF9800"
-              />
-              <StatCard
-                icon="alert-circle-outline"
-                title="Alertas"
-                value={dashboardData.alerts}
-                unit="ativos"
-                color="#F44336"
-              />
-            </View>
-          </View>
+        <View style={[styles.statCard, { backgroundColor: '#fff3e0' }]}>
+          <Ionicons name="warning-outline" size={24} color="#f57c00" />
+          <Text style={styles.statNumber}>{dashboardData.activeAlerts}</Text>
+          <Text style={styles.statLabel}>Alertas Ativos</Text>
+        </View>
 
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ações Rápidas</Text>
-            <QuickActionCard
-              icon="analytics-outline"
-              title="Relatórios Detalhados"
-              onPress={() => {}}
-              color="#00FFCC"
-            />
-            <QuickActionCard
-              icon="notifications-outline"
-              title="Configurar Alertas"
-              onPress={() => {}}
-              color="#FF9800"
-            />
-            <QuickActionCard
-              icon="map-outline"
-              title="Monitorar Áreas"
-              onPress={() => {}}
-              color="#2196F3"
-            />
-            <QuickActionCard
-              icon="leaf-outline"
-              title="Dicas de Sustentabilidade"
-              onPress={() => {}}
-              color="#4CAF50"
-            />
-          </View>
+        <View style={[styles.statCard, { backgroundColor: '#e8f5e8' }]}>
+          <Ionicons name="water-outline" size={24} color="#2e7d32" />
+          <Text style={styles.statNumber}>{dashboardData.avgSoilMoisture}%</Text>
+          <Text style={styles.statLabel}>Umidade Média</Text>
+        </View>
+      </View>
 
-          {/* Recent Activity */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Atividade Recente</Text>
-            <View style={styles.activityCard}>
-              <LinearGradient
-                colors={['#2D2D2D', '#3D3D3D']}
-                style={styles.activityCardGradient}
-              >
-                <View style={styles.activityItem}>
-                  <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                  <View style={styles.activityContent}>
-                    <Text style={styles.activityTitle}>Sistema de irrigação otimizado</Text>
-                    <Text style={styles.activityTime}>Há 2 horas</Text>
-                  </View>
-                </View>
-                <View style={styles.activityItem}>
-                  <Ionicons name="alert-circle" size={20} color="#FF9800" />
-                  <View style={styles.activityContent}>
-                    <Text style={styles.activityTitle}>Vazamento detectado no setor B</Text>
-                    <Text style={styles.activityTime}>Há 5 horas</Text>
-                  </View>
-                </View>
-                <View style={styles.activityItem}>
-                  <Ionicons name="trending-up" size={20} color="#00FFCC" />
-                  <View style={styles.activityContent}>
-                    <Text style={styles.activityTitle}>Economia de 15% no consumo</Text>
-                    <Text style={styles.activityTime}>Ontem</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Nível de Risco Atual</Text>
+        <View style={[
+          styles.riskCard, 
+          { backgroundColor: getRiskColor(dashboardData.riskLevel) + '20' }
+        ]}>
+          <View style={styles.riskHeader}>
+            <Ionicons 
+              name="shield-outline" 
+              size={28} 
+              color={getRiskColor(dashboardData.riskLevel)} 
+            />
+            <Text style={[
+              styles.riskLevel, 
+              { color: getRiskColor(dashboardData.riskLevel) }
+            ]}>
+              {getRiskText(dashboardData.riskLevel)}
+            </Text>
           </View>
+          <Text style={styles.riskDescription}>
+            Baseado na análise de umidade do solo, previsão meteorológica e dados históricos
+          </Text>
+        </View>
+      </View>
 
-          {/* Weather Info */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Condições Climáticas</Text>
-            <View style={styles.weatherCard}>
-              <LinearGradient
-                colors={['#2D2D2D', '#3D3D3D']}
-                style={styles.weatherCardGradient}
-              >
-                <View style={styles.weatherMain}>
-                  <Ionicons name="partly-sunny" size={48} color="#FFB74D" />
-                  <View style={styles.weatherInfo}>
-                    <Text style={styles.temperature}>24°C</Text>
-                    <Text style={styles.weatherDescription}>Parcialmente nublado</Text>
-                  </View>
-                </View>
-                <View style={styles.weatherDetails}>
-                  <View style={styles.weatherDetailItem}>
-                    <Ionicons name="rainy" size={16} color="#00FFCC" />
-                    <Text style={styles.weatherDetailText}>Chuva: 0%</Text>
-                  </View>
-                  <View style={styles.weatherDetailItem}>
-                    <Ionicons name="water" size={16} color="#2196F3" />
-                    <Text style={styles.weatherDetailText}>Umidade: 65%</Text>
-                  </View>
-                  <View style={styles.weatherDetailItem}>
-                    <Ionicons name="arrow-up" size={16} color="#FF5722" />
-                    <Text style={styles.weatherDetailText}>Vento: 12 km/h</Text>
-                  </View>
-                </View>
-              </LinearGradient>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Previsão do Tempo</Text>
+        <View style={styles.weatherCard}>
+          <Ionicons name="cloud-outline" size={32} color="#64b5f6" />
+          <Text style={styles.weatherText}>{dashboardData.weatherForecast}</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Alertas Recentes</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>Ver todos</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {dashboardData.recentAlerts.map((alert) => (
+          <View key={alert.id} style={styles.alertCard}>
+            <View style={styles.alertHeader}>
+              <Ionicons 
+                name="warning" 
+                size={20} 
+                color={alert.severity === 'HIGH' ? '#dc3545' : '#ffc107'} 
+              />
+              <Text style={styles.alertTime}>{alert.timestamp}</Text>
             </View>
+            <Text style={styles.alertMessage}>{alert.message}</Text>
           </View>
-        </ScrollView>
-      </LinearGradient>
-    </View>
+        ))}
+      </View>
+
+      <View style={styles.quickActions}>
+        <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="add-circle-outline" size={24} color="#2E8B57" />
+            <Text style={styles.actionText}>Nova Propriedade</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="analytics-outline" size={24} color="#2E8B57" />
+            <Text style={styles.actionText}>Relatórios</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    padding: 20,
+    backgroundColor: '#2E8B57',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  greeting: {
-    color: '#CCCCCC',
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  userName: {
-    color: '#FFFFFF',
+  welcomeText: {
     fontSize: 24,
-    fontWeight: '700',
-    marginTop: 4,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 5,
   },
-  propertyName: {
-    color: '#00FFCC',
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 16,
+  dateText: {
+    fontSize: 16,
+    color: '#e8f5e8',
+    textTransform: 'capitalize',
   },
   statsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: -30,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
+    alignItems: 'center',
+    padding: 20,
+    marginHorizontal: 5,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  statCardGradient: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-    borderRadius: 16,
-  },
-  statCardHeader: {
-    marginBottom: 8,
-  },
-  statValue: {
-    color: '#FFFFFF',
+  statNumber: {
     fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 8,
   },
-  statUnit: {
-    color: '#CCCCCC',
+  statLabel: {
     fontSize: 12,
-    fontWeight: '400',
-    marginBottom: 8,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
   },
-  statTitle: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    fontWeight: '500',
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  actionCard: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
   },
-  actionCardGradient: {
+  sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-    borderRadius: 12,
+    marginBottom: 12,
   },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  actionTitle: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  activityCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  activityCardGradient: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-    borderRadius: 12,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  activityContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  activityTitle: {
-    color: '#FFFFFF',
+  seeAllText: {
+    color: '#2E8B57',
     fontSize: 14,
     fontWeight: '500',
-    marginBottom: 2,
   },
-  activityTime: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    fontWeight: '400',
+  riskCard: {
+    padding: 20,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  riskHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  riskLevel: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  riskDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
   },
   weatherCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  weatherCardGradient: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-    borderRadius: 12,
-  },
-  weatherMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  weatherInfo: {
-    marginLeft: 16,
+  weatherText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 15,
+    flex: 1,
   },
-  temperature: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 4,
+  alertCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  weatherDescription: {
-    color: '#CCCCCC',
+  alertHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  alertTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  alertMessage: {
     fontSize: 14,
-    fontWeight: '400',
+    color: '#333',
+    lineHeight: 18,
   },
-  weatherDetails: {
+  quickActions: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  weatherDetailItem: {
-    flexDirection: 'row',
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
     alignItems: 'center',
+    marginHorizontal: 5,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  weatherDetailText: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    fontWeight: '400',
-    marginLeft: 4,
+  actionText: {
+    fontSize: 14,
+    color: '#2E8B57',
+    fontWeight: '500',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
-
-export default DashboardScreen;

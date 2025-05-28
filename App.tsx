@@ -1,102 +1,128 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-// Import screens
-import WelcomeScreen from './src/screens/Welcome/WelcomeScreen';
-import LoginScreen from './src/screens/Auth/LoginScreen';
-import RegisterUserScreen from './src/screens/Auth/RegisterUserScreen';
-import RegisterAddressScreen from './src/screens/Auth/RegisterAddressScreen';
-import DashboardScreen from './src/screens/Dashboard/DashboardScreen';
-import SettingsScreen from './src/screens/Settings/SettingsScreen';
+// Screens
+import LoginScreen from './src/screens/LoginScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
+import PropertiesScreen from './src/screens/PropertiesScreen';
+import AddPropertyScreen from './src/screens/AddPropertyScreen';
+import PropertyDetailsScreen from './src/screens/PropertyDetailsScreen';
+import AlertsScreen from './src/screens/AlertsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
-// Import context
-import { AuthProvider } from './src/contexts/AuthContext';
+// Auth Context
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-export default function App() {
-  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
 
-  useEffect(() => {
-    checkFirstLaunch();
-  }, []);
+          if (route.name === 'Dashboard') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Properties') {
+            iconName = focused ? 'location' : 'location-outline';
+          } else if (route.name === 'Alerts') {
+            iconName = focused ? 'warning' : 'warning-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          } else {
+            iconName = 'ellipse-outline';
+          }
 
-  const checkFirstLaunch = async () => {
-    try {
-      const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-      if (hasLaunched === null) {
-        setIsFirstLaunch(true);
-        await AsyncStorage.setItem('hasLaunched', 'true');
-      } else {
-        setIsFirstLaunch(false);
-      }
-    } catch (error) {
-      console.error('Error checking first launch:', error);
-      setIsFirstLaunch(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#2E8B57',
+        tabBarInactiveTintColor: 'gray',
+        headerStyle: {
+          backgroundColor: '#2E8B57',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      })}
+    >
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{ title: 'Dashboard' }}
+      />
+      <Tab.Screen 
+        name="Properties" 
+        component={PropertiesScreen}
+        options={{ title: 'Propriedades' }}
+      />
+      <Tab.Screen 
+        name="Alerts" 
+        component={AlertsScreen}
+        options={{ title: 'Alertas' }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{ title: 'Perfil' }}
+      />
+    </Tab.Navigator>
+  );
+}
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00FFCC" />
-      </View>
-    );
+function AppNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return null; // You could add a loading screen here
   }
 
   return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {user ? (
+        <>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen 
+            name="AddProperty" 
+            component={AddPropertyScreen}
+            options={{
+              headerShown: true,
+              title: 'Nova Propriedade',
+              headerStyle: { backgroundColor: '#2E8B57' },
+              headerTintColor: '#fff',
+            }}
+          />
+          <Stack.Screen 
+            name="PropertyDetails" 
+            component={PropertyDetailsScreen}
+            options={{
+              headerShown: true,
+              title: 'Detalhes da Propriedade',
+              headerStyle: { backgroundColor: '#2E8B57' },
+              headerTintColor: '#fff',
+            }}
+          />
+        </>
+      ) : (
+        <Stack.Screen name="Login" component={LoginScreen} />
+      )}
+    </Stack.Navigator>
+  );
+}
+
+export default function App() {
+  return (
     <AuthProvider>
       <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator 
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: true,
-            cardStyle: { backgroundColor: '#1A1A1A' },
-            animation: 'slide_from_right', // React Navigation v7 syntax
-          }}
-          initialRouteName={isFirstLaunch ? 'Welcome' : 'Login'}
-        >
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen 
-            name="RegisterUser" 
-            component={RegisterUserScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen 
-            name="RegisterAddress" 
-            component={RegisterAddressScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen 
-            name="Dashboard" 
-            component={DashboardScreen}
-            options={{ animation: 'fade' }}
-          />
-          <Stack.Screen 
-            name="Settings" 
-            component={SettingsScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-        </Stack.Navigator>
+        <StatusBar style="light" backgroundColor="#2E8B57" />
+        <AppNavigator />
       </NavigationContainer>
     </AuthProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-  },
-});

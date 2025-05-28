@@ -1,205 +1,92 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth';
 
-interface User {
-  id: number;
-  nome: string;
-  email: string;
-  telefone?: string;
-  status: string;
-  last_login?: string;
-}
+// Firebase config - Replace with your actual config
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "waterwise-app.firebaseapp.com",
+  projectId: "waterwise-app",
+  storageBucket: "waterwise-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
 
-interface Property {
-  id: number;
-  nome: string;
-  endereco: string;
-  cidade: string;
-  estado: string;
-  cep?: string;
-  area_total?: number;
-  usuario_id: number;
-}
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 interface AuthContextType {
   user: User | null;
-  property: Property | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  register: (userData: any, propertyData: any) => Promise<boolean>;
-  updateUser: (userData: Partial<User>) => Promise<void>;
-  quickLogin: () => Promise<boolean>; // Adicionar função de login rápido
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  const checkAuthStatus = async () => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      const propertyData = await AsyncStorage.getItem('property');
-      
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-      
-      if (propertyData) {
-        setProperty(JSON.parse(propertyData));
-      }
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.error('Error checking auth status:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error signing in:', error);
+      throw error;
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const signUp = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      
-      // Simulate API call - Replace with actual API call
-      const response = await fetch('YOUR_API_ENDPOINT/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const { user: userData, property: propertyData } = await response.json();
-        
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
-        await AsyncStorage.setItem('property', JSON.stringify(propertyData));
-        
-        setUser(userData);
-        setProperty(propertyData);
-        
-        return true;
-      }
-      
-      return false;
+      await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    } finally {
-      setLoading(false);
+      console.error('Error signing up:', error);
+      throw error;
     }
   };
 
-  const register = async (userData: any, propertyData: any): Promise<boolean> => {
+  const logout = async () => {
     try {
-      setLoading(true);
-      
-      // Simulate API call - Replace with actual API call
-      const response = await fetch('YOUR_API_ENDPOINT/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user: userData, property: propertyData }),
-      });
-
-      if (response.ok) {
-        const { user: newUser, property: newProperty } = await response.json();
-        
-        await AsyncStorage.setItem('user', JSON.stringify(newUser));
-        await AsyncStorage.setItem('property', JSON.stringify(newProperty));
-        
-        setUser(newUser);
-        setProperty(newProperty);
-        
-        return true;
-      }
-      
-      return false;
+      await signOut(auth);
     } catch (error) {
-      console.error('Register error:', error);
-      return false;
-    } finally {
-      setLoading(false);
+      console.error('Error signing out:', error);
+      throw error;
     }
   };
 
-  const logout = async (): Promise<void> => {
-    try {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('property');
-      setUser(null);
-      setProperty(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  const updateUser = async (userData: Partial<User>): Promise<void> => {
-    try {
-      if (user) {
-        const updatedUser = { ...user, ...userData };
-        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-      }
-    } catch (error) {
-      console.error('Update user error:', error);
-    }
-  };
-
-  const quickLogin = async (): Promise<boolean> => {
-    try {
-      // Mock user data para desenvolvimento
-      const mockUser: User = {
-        id: 1,
-        nome: 'Usuário Teste',
-        email: 'teste@waterwise.com',
-        telefone: '11999999999',
-        status: 'ATIVO',
-        last_login: new Date().toISOString(),
-      };
-
-      const mockProperty: Property = {
-        id: 1,
-        nome: 'Fazenda São João',
-        endereco: 'Rua das Águas, 123',
-        cidade: 'São Paulo',
-        estado: 'SP',
-        cep: '01234-567',
-        area_total: 50.5,
-        usuario_id: 1,
-      };
-
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-      await AsyncStorage.setItem('property', JSON.stringify(mockProperty));
-      
-      setUser(mockUser);
-      setProperty(mockProperty);
-      
-      return true;
-    } catch (error) {
-      console.error('Quick login error:', error);
-      return false;
-    }
-  };
-
-  const value: AuthContextType = {
+  const value = {
     user,
-    property,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    register,
-    updateUser,
-    quickLogin,
     loading,
+    signIn,
+    signUp,
+    logout,
   };
 
   return (
@@ -207,12 +94,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+}
