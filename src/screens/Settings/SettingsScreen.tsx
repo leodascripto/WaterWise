@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -22,6 +23,7 @@ interface SettingsScreenProps {
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const { user, property, logout, updateUser } = useAuth();
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: true,
@@ -154,7 +156,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
         style={styles.gradient}
@@ -344,7 +346,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           </View>
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 

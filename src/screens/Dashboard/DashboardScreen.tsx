@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DashboardScreenProps {
   navigation: any;
@@ -22,6 +23,7 @@ const { width } = Dimensions.get('window');
 const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const { user, property, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
   const [dashboardData, setDashboardData] = useState({
     waterUsage: 0,
     savings: 0,
@@ -102,7 +104,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
         style={styles.gradient}
@@ -269,7 +271,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
           </View>
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 

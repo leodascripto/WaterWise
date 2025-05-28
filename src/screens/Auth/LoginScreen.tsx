@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface LoginScreenProps {
   navigation: any;
@@ -24,8 +25,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
   
-  const { login, isAuthenticated, loading } = useAuth();
+  const { login, quickLogin, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -56,41 +58,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     }
   };
 
-  // 🚀 NOVA FUNÇÃO: Login Rápido para Desenvolvimento
-  const handleQuickLogin = () => {
-    Alert.alert(
-      'Login Rápido (DEV)',
-      'Pular autenticação e ir direto para o Dashboard?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Sim, pular', 
-          onPress: () => {
-            // Simular usuário logado
-            const mockUser = {
-              id: 1,
-              nome: 'Usuário Teste',
-              email: 'teste@waterwise.com',
-              telefone: '(11) 99999-9999',
-              status: 'ATIVO'
-            };
-            const mockProperty = {
-              id: 1,
-              nome: 'Fazenda Teste',
-              endereco: 'Rua Teste, 123',
-              cidade: 'São Paulo',
-              estado: 'SP',
-              cep: '01234-567',
-              area_total: 50.5,
-              usuario_id: 1
-            };
-            
-            // Navegar direto para Dashboard
-            navigation.navigate('Dashboard');
-          }
-        },
-      ]
-    );
+  const handleQuickLogin = async () => {
+    setIsLoading(true);
+    try {
+      const success = await quickLogin();
+      if (success) {
+        navigation.navigate('Dashboard');
+      } else {
+        Alert.alert('Erro', 'Falha no login rápido');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Falha no login rápido');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegister = () => {
@@ -106,7 +87,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
         style={styles.gradient}
@@ -127,16 +108,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               </Text>
               <Text style={styles.subtitle}>Gestão Inteligente de Água</Text>
             </View>
-
-            {/* 🚀 NOVO: Botão de Login Rápido para DEV */}
-            {__DEV__ && (
-              <TouchableOpacity onPress={handleQuickLogin} style={styles.quickLoginButton}>
-                <View style={styles.quickLoginContent}>
-                  <Ionicons name="flash" size={16} color="#FF9800" />
-                  <Text style={styles.quickLoginText}>Login Rápido (DEV)</Text>
-                </View>
-              </TouchableOpacity>
-            )}
 
             {/* Login Form */}
             <View style={styles.formContainer}>
@@ -205,17 +176,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Register Section */}
-            <View style={styles.registerSection}>
-              <Text style={styles.registerText}>Não tem uma conta?</Text>
-              <TouchableOpacity onPress={handleRegister}>
-                <Text style={styles.registerLink}>Cadastre-se</Text>
+                          {/* Dev Quick Login - APENAS PARA DESENVOLVIMENTO */}
+              <TouchableOpacity
+                onPress={handleQuickLogin}
+                style={styles.quickLoginButton}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FF9800" size="small" />
+                ) : (
+                  <Text style={styles.quickLoginText}>🚀 Login Rápido (DEV)</Text>
+                )}
               </TouchableOpacity>
-            </View>
+
+              {/* Register Section */}
+              <View style={styles.registerSection}>
+                <Text style={styles.registerText}>Não tem uma conta?</Text>
+                <TouchableOpacity onPress={handleRegister}>
+                  <Text style={styles.registerLink}>Cadastre-se</Text>
+                </TouchableOpacity>
+              </View>
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -234,8 +218,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'center',
-    // ✅ NOVO: Respeitar safe areas
-    paddingTop: Platform.OS === 'ios' ? 20 : 40,
   },
   loadingContainer: {
     flex: 1,
@@ -245,7 +227,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40, // Reduzido para dar espaço ao botão DEV
+    marginBottom: 60,
   },
   logo: {
     fontSize: 36,
@@ -264,27 +246,6 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
     fontSize: 16,
     fontWeight: '400',
-  },
-  // 🚀 NOVOS ESTILOS: Botão de Login Rápido
-  quickLoginButton: {
-    alignSelf: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 152, 0, 0.3)',
-  },
-  quickLoginContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  quickLoginText: {
-    color: '#FF9800',
-    fontSize: 12,
-    fontWeight: '600',
   },
   formContainer: {
     marginBottom: 40,
@@ -344,12 +305,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  quickLoginButton: {
+    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+    borderWidth: 1,
+    borderColor: '#FF9800',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  quickLoginText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   registerSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    // ✅ NOVO: Margem inferior para safe area
-    marginBottom: Platform.OS === 'ios' ? 20 : 0,
   },
   registerText: {
     color: '#CCCCCC',

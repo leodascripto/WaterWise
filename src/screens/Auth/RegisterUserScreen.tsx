@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,550 +10,116 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface RegisterUserScreenProps {
+interface RegisterAddressScreenProps {
   navigation: any;
+  route: any;
 }
 
-const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({ navigation }) => {
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    senha: '',
-    confirmSenha: '',
-    telefone: '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+const RegisterAddressScreen: React.FC<RegisterAddressScreenProps> = ({ navigation, route }) => {
+  const { userData } = route.params;
+  const { register } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
   
-  // ✅ CORREÇÃO: Estado para validação de senha
-  const [passwordValidation, setPasswordValidation] = useState({
-    length: false,
-    match: false,
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // ✅ NOVA FUNÇÃO: Validação em tempo real da senha
-  useEffect(() => {
-    const { senha, confirmSenha } = formData;
-    
-    setPasswordValidation({
-      length: senha.length >= 6,
-      match: senha === confirmSenha && senha.length > 0 && confirmSenha.length > 0,
-    });
-  }, [formData.senha, formData.confirmSenha]);
-
-  const validateForm = () => {
-    const { nome, email, senha, confirmSenha, telefone } = formData;
-
-    if (!nome.trim()) {
-      Alert.alert('Erro', 'Nome é obrigatório');
-      return false;
-    }
-
-    if (!email.trim()) {
-      Alert.alert('Erro', 'Email é obrigatório');
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Erro', 'Email inválido');
-      return false;
-    }
-
-    if (!senha) {
-      Alert.alert('Erro', 'Senha é obrigatória');
-      return false;
-    }
-
-    if (senha.length < 6) {
-      Alert.alert('Erro', 'Senha deve ter pelo menos 6 caracteres');
-      return false;
-    }
-
-    if (senha !== confirmSenha) {
-      Alert.alert('Erro', 'Senhas não conferem');
-      return false;
-    }
-
-    if (telefone && telefone.length < 10) {
-      Alert.alert('Erro', 'Telefone deve ter pelo menos 10 dígitos');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleNext = () => {
-    if (validateForm()) {
-      navigation.navigate('RegisterAddress', { userData: formData });
-    }
-  };
-
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
-        style={styles.gradient}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Criar Conta</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '50%' }]} />
-          </View>
-          <Text style={styles.progressText}>Passo 1 de 2</Text>
-        </View>
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Informações Pessoais</Text>
-              <Text style={styles.subtitle}>Vamos começar com seus dados básicos</Text>
-
-              {/* Nome Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nome completo"
-                  placeholderTextColor="#888888"
-                  value={formData.nome}
-                  onChangeText={(value) => handleInputChange('nome', value)}
-                  autoCapitalize="words"
-                />
-              </View>
-
-              {/* Email Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor="#888888"
-                  value={formData.email}
-                  onChangeText={(value) => handleInputChange('email', value)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-              </View>
-
-              {/* Telefone Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Telefone (opcional)"
-                  placeholderTextColor="#888888"
-                  value={formData.telefone}
-                  onChangeText={(value) => handleInputChange('telefone', value)}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              {/* Senha Input */}
-              <View style={[
-                styles.inputContainer,
-                formData.senha.length > 0 && !passwordValidation.length && styles.inputError
-              ]}>
-                <Ionicons name="lock-closed-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Senha"
-                  placeholderTextColor="#888888"
-                  value={formData.senha}
-                  onChangeText={(value) => handleInputChange('senha', value)}
-                  secureTextEntry={!showPassword}
-                  autoComplete="new-password"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#CCCCCC"
-                  />
-                </TouchableOpacity>
-                {/* ✅ NOVO: Indicador visual de validação */}
-                {formData.senha.length > 0 && (
-                  <View style={styles.validationIcon}>
-                    <Ionicons
-                      name={passwordValidation.length ? "checkmark-circle" : "close-circle"}
-                      size={16}
-                      color={passwordValidation.length ? "#4CAF50" : "#F44336"}
-                    />
-                  </View>
-                )}
-              </View>
-
-              {/* Confirmar Senha Input */}
-              <View style={[
-                styles.inputContainer,
-                formData.confirmSenha.length > 0 && !passwordValidation.match && styles.inputError
-              ]}>
-                <Ionicons name="lock-closed-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirmar senha"
-                  placeholderTextColor="#888888"
-                  value={formData.confirmSenha}
-                  onChangeText={(value) => handleInputChange('confirmSenha', value)}
-                  secureTextEntry={!showConfirmPassword}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#CCCCCC"
-                  />
-                </TouchableOpacity>
-                {/* ✅ NOVO: Indicador visual de confirmação */}
-                {formData.confirmSenha.length > 0 && (
-                  <View style={styles.validationIcon}>
-                    <Ionicons
-                      name={passwordValidation.match ? "checkmark-circle" : "close-circle"}
-                      size={16}
-                      color={passwordValidation.match ? "#4CAF50" : "#F44336"}
-                    />
-                  </View>
-                )}
-              </View>
-
-              {/* ✅ ATUALIZADO: Password Requirements com validação visual */}
-              <View style={styles.requirementsContainer}>
-                <Text style={styles.requirementsTitle}>Requisitos da senha:</Text>
-                <View style={styles.requirementRow}>
-                  <Ionicons
-                    name={passwordValidation.length ? "checkmark-circle" : "close-circle"}
-                    size={14}
-                    color={passwordValidation.length ? "#4CAF50" : "#F44336"}
-                    style={styles.requirementIcon}
-                  />
-                  <Text style={[
-                    styles.requirementItem,
-                    passwordValidation.length && styles.requirementValid
-                  ]}>
-                    Mínimo de 6 caracteres
-                  </Text>
-                </View>
-                <View style={styles.requirementRow}>
-                  <Ionicons
-                    name={passwordValidation.match ? "checkmark-circle" : "close-circle"}
-                    size={14}
-                    color={passwordValidation.match ? "#4CAF50" : "#F44336"}
-                    style={styles.requirementIcon}
-                  />
-                  <Text style={[
-                    styles.requirementItem,
-                    passwordValidation.match && styles.requirementValid
-                  ]}>
-                    Senhas devem ser iguais
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </ScrollView>
-
-          {/* Next Button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <LinearGradient
-                colors={['#00FFCC', '#00D4AA']}
-                style={styles.nextButtonGradient}
-              >
-                <Text style={styles.nextButtonText}>Próximo</Text>
-                <Ionicons name="arrow-forward" size={20} color="#1A1A1A" style={styles.nextButtonIcon} />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </LinearGradient>
-    </SafeAreaView>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1A1A1A',
-  },
-  gradient: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    // ✅ NOVO: Respeitar safe area do iOS
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 40,
-  },
-  progressContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#3D3D3D',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#00FFCC',
-    borderRadius: 2,
-  },
-  progressText: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: '#CCCCCC',
-    fontSize: 16,
-    marginBottom: 32,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2D2D2D',
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-    position: 'relative', // Para posicionar ícones de validação
-  },
-  // ✅ NOVO: Estilo para inputs com erro
-  inputError: {
-    borderColor: '#F44336',
-    borderWidth: 1.5,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  eyeIcon: {
-    padding: 4,
-    marginRight: 8, // Espaço para ícone de validação
-  },
-  // ✅ NOVO: Ícone de validação ao lado do input
-  validationIcon: {
-    position: 'absolute',
-    right: 12,
-    top: '50%',
-    transform: [{ translateY: -8 }],
-  },
-  requirementsContainer: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: '#2D2D2D',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3D3D3D',
-  },
-  requirementsTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  // ✅ NOVO: Linha de requisito com ícone
-  requirementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  requirementIcon: {
-    marginRight: 8,
-  },
-  requirementItem: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    flex: 1,
-  },
-  // ✅ NOVO: Estilo para requisito válido
-  requirementValid: {
-    color: '#4CAF50',
-    fontWeight: '500',
-  },
-  buttonContainer: {
-    paddingHorizontal: 20,
-    // ✅ NOVO: Margem inferior respeitando safe area
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-    paddingTop: 16,
-  },
-  nextButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  nextButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  nextButtonText: {
-    color: '#1A1A1A',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  nextButtonIcon: {
-    marginLeft: 8,
-  },
-});
-
-export default RegisterUserScreen;import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-
-interface RegisterUserScreenProps {
-  navigation: any;
-}
-
-const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({ navigation }) => {
-  const [formData, setFormData] = useState({
+  const [propertyData, setPropertyData] = useState({
     nome: '',
-    email: '',
-    senha: '',
-    confirmSenha: '',
-    telefone: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    area_total: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setPropertyData(prev => ({
       ...prev,
       [field]: value,
     }));
   };
 
   const validateForm = () => {
-    const { nome, email, senha, confirmSenha, telefone } = formData;
+    const { nome, endereco, cidade, estado, cep } = propertyData;
 
     if (!nome.trim()) {
-      Alert.alert('Erro', 'Nome é obrigatório');
+      Alert.alert('Erro', 'Nome da propriedade é obrigatório');
       return false;
     }
 
-    if (!email.trim()) {
-      Alert.alert('Erro', 'Email é obrigatório');
+    if (!endereco.trim()) {
+      Alert.alert('Erro', 'Endereço é obrigatório');
       return false;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Erro', 'Email inválido');
+    if (!cidade.trim()) {
+      Alert.alert('Erro', 'Cidade é obrigatória');
       return false;
     }
 
-    if (!senha) {
-      Alert.alert('Erro', 'Senha é obrigatória');
+    if (!estado.trim()) {
+      Alert.alert('Erro', 'Estado é obrigatório');
       return false;
     }
 
-    if (senha.length < 6) {
-      Alert.alert('Erro', 'Senha deve ter pelo menos 6 caracteres');
+    if (!cep.trim()) {
+      Alert.alert('Erro', 'CEP é obrigatório');
       return false;
     }
 
-    if (senha !== confirmSenha) {
-      Alert.alert('Erro', 'Senhas não conferem');
-      return false;
-    }
-
-    if (telefone && telefone.length < 10) {
-      Alert.alert('Erro', 'Telefone deve ter pelo menos 10 dígitos');
+    const cepRegex = /^\d{5}-?\d{3}$/;
+    if (!cepRegex.test(cep)) {
+      Alert.alert('Erro', 'CEP deve ter o formato 00000-000');
       return false;
     }
 
     return true;
   };
 
-  const handleNext = () => {
-    if (validateForm()) {
-      navigation.navigate('RegisterAddress', { userData: formData });
+  const formatCEP = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    const formatted = cleaned.replace(/^(\d{5})(\d{3})$/, '$1-$2');
+    return formatted;
+  };
+
+  const handleCEPChange = (text: string) => {
+    const formatted = formatCEP(text);
+    handleInputChange('cep', formatted);
+  };
+
+  const handleFinish = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const success = await register(userData, {
+        ...propertyData,
+        area_total: propertyData.area_total ? parseFloat(propertyData.area_total) : null,
+      });
+
+      if (success) {
+        Alert.alert(
+          'Sucesso!',
+          'Conta criada com sucesso!',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Dashboard'),
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Erro', 'Falha ao criar conta. Tente novamente.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Falha na conexão. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -562,7 +128,7 @@ const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({ navigation }) =
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#1A1A1A', '#2D2D2D', '#1A1A1A']}
         style={styles.gradient}
@@ -579,9 +145,9 @@ const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({ navigation }) =
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '50%' }]} />
+            <View style={[styles.progressFill, { width: '100%' }]} />
           </View>
-          <Text style={styles.progressText}>Passo 1 de 2</Text>
+          <Text style={styles.progressText}>Passo 2 de 2</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -593,121 +159,124 @@ const RegisterUserScreen: React.FC<RegisterUserScreenProps> = ({ navigation }) =
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.formContainer}>
-              <Text style={styles.title}>Informações Pessoais</Text>
-              <Text style={styles.subtitle}>Vamos começar com seus dados básicos</Text>
+              <Text style={styles.title}>Dados da Propriedade</Text>
+              <Text style={styles.subtitle}>Agora nos conte sobre sua propriedade rural</Text>
 
-              {/* Nome Input */}
+              {/* Nome da Propriedade */}
               <View style={styles.inputContainer}>
-                <Ionicons name="person-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
+                <Ionicons name="home-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Nome completo"
+                  placeholder="Nome da propriedade"
                   placeholderTextColor="#888888"
-                  value={formData.nome}
+                  value={propertyData.nome}
                   onChangeText={(value) => handleInputChange('nome', value)}
                   autoCapitalize="words"
                 />
               </View>
 
-              {/* Email Input */}
+              {/* Endereço */}
               <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
+                <Ionicons name="location-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder="Endereço completo"
                   placeholderTextColor="#888888"
-                  value={formData.email}
-                  onChangeText={(value) => handleInputChange('email', value)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
+                  value={propertyData.endereco}
+                  onChangeText={(value) => handleInputChange('endereco', value)}
+                  autoCapitalize="words"
                 />
               </View>
 
-              {/* Telefone Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Telefone (opcional)"
-                  placeholderTextColor="#888888"
-                  value={formData.telefone}
-                  onChangeText={(value) => handleInputChange('telefone', value)}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              {/* Senha Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Senha"
-                  placeholderTextColor="#888888"
-                  value={formData.senha}
-                  onChangeText={(value) => handleInputChange('senha', value)}
-                  secureTextEntry={!showPassword}
-                  autoComplete="new-password"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#CCCCCC"
+              {/* Cidade e Estado */}
+              <View style={styles.rowContainer}>
+                <View style={[styles.inputContainer, styles.flexInput]}>
+                  <Ionicons name="business-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cidade"
+                    placeholderTextColor="#888888"
+                    value={propertyData.cidade}
+                    onChangeText={(value) => handleInputChange('cidade', value)}
+                    autoCapitalize="words"
                   />
-                </TouchableOpacity>
+                </View>
+                
+                <View style={[styles.inputContainer, styles.stateInput]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Estado"
+                    placeholderTextColor="#888888"
+                    value={propertyData.estado}
+                    onChangeText={(value) => handleInputChange('estado', value)}
+                    autoCapitalize="characters"
+                    maxLength={2}
+                  />
+                </View>
               </View>
 
-              {/* Confirmar Senha Input */}
+              {/* CEP */}
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
+                <Ionicons name="map-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Confirmar senha"
+                  placeholder="CEP (00000-000)"
                   placeholderTextColor="#888888"
-                  value={formData.confirmSenha}
-                  onChangeText={(value) => handleInputChange('confirmSenha', value)}
-                  secureTextEntry={!showConfirmPassword}
+                  value={propertyData.cep}
+                  onChangeText={handleCEPChange}
+                  keyboardType="numeric"
+                  maxLength={9}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#CCCCCC"
-                  />
-                </TouchableOpacity>
               </View>
 
-              {/* Password Requirements */}
-              <View style={styles.requirementsContainer}>
-                <Text style={styles.requirementsTitle}>Requisitos da senha:</Text>
-                <Text style={styles.requirementItem}>• Mínimo de 6 caracteres</Text>
-                <Text style={styles.requirementItem}>• Combine letras e números</Text>
+              {/* Área Total */}
+              <View style={styles.inputContainer}>
+                <Ionicons name="resize-outline" size={20} color="#CCCCCC" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Área total (hectares) - Opcional"
+                  placeholderTextColor="#888888"
+                  value={propertyData.area_total}
+                  onChangeText={(value) => handleInputChange('area_total', value)}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+
+              {/* Info Box */}
+              <View style={styles.infoContainer}>
+                <Ionicons name="information-circle-outline" size={20} color="#00FFCC" />
+                <Text style={styles.infoText}>
+                  Estes dados nos ajudam a personalizar as funcionalidades do app para sua propriedade.
+                </Text>
               </View>
             </View>
           </ScrollView>
 
-          {/* Next Button */}
+          {/* Finish Button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+            <TouchableOpacity 
+              onPress={handleFinish} 
+              style={styles.finishButton}
+              disabled={isLoading}
+            >
               <LinearGradient
                 colors={['#00FFCC', '#00D4AA']}
-                style={styles.nextButtonGradient}
+                style={styles.finishButtonGradient}
               >
-                <Text style={styles.nextButtonText}>Próximo</Text>
-                <Ionicons name="arrow-forward" size={20} color="#1A1A1A" style={styles.nextButtonIcon} />
+                {isLoading ? (
+                  <ActivityIndicator color="#1A1A1A" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.finishButtonText}>Finalizar Cadastro</Text>
+                    <Ionicons name="checkmark" size={20} color="#1A1A1A" style={styles.finishButtonIcon} />
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -799,51 +368,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
   },
-  eyeIcon: {
-    padding: 4,
+  rowContainer: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  requirementsContainer: {
-    marginTop: 16,
+  flexInput: {
+    flex: 1,
+  },
+  stateInput: {
+    width: 100,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     padding: 16,
-    backgroundColor: '#2D2D2D',
+    backgroundColor: 'rgba(0, 255, 204, 0.1)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#3D3D3D',
+    borderColor: 'rgba(0, 255, 204, 0.2)',
+    marginTop: 16,
   },
-  requirementsTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  requirementItem: {
+  infoText: {
     color: '#CCCCCC',
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: 14,
+    marginLeft: 12,
+    lineHeight: 20,
+    flex: 1,
   },
   buttonContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
     paddingTop: 16,
   },
-  nextButton: {
+  finishButton: {
     borderRadius: 12,
     overflow: 'hidden',
   },
-  nextButtonGradient: {
+  finishButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
   },
-  nextButtonText: {
+  finishButtonText: {
     color: '#1A1A1A',
     fontSize: 18,
     fontWeight: '600',
   },
-  nextButtonIcon: {
+  finishButtonIcon: {
     marginLeft: 8,
   },
 });
 
-export default RegisterUserScreen;
+export default RegisterAddressScreen;
