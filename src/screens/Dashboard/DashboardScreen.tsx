@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
-import { apiService } from '../services/apiService';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/apiService';
 
 const { width } = Dimensions.get('window');
 

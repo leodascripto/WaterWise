@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
-import { apiService } from '../services/apiService';
+import { apiService } from '../../services/apiService';
 
 const { width } = Dimensions.get('window');
 

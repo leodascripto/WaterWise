@@ -5,14 +5,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-// Screens
-import LoginScreen from './src/screens/LoginScreen';
-import DashboardScreen from './src/screens/DashboardScreen';
-import PropertiesScreen from './src/screens/PropertiesScreen';
-import AddPropertyScreen from './src/screens/AddPropertyScreen';
-import PropertyDetailsScreen from './src/screens/PropertyDetailsScreen';
-import AlertsScreen from './src/screens/AlertsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+// Screens - Updated imports with correct paths
+import LoginScreen from './src/screens/Auth/LoginScreen';
+import DashboardScreen from './src/screens/Dashboard/DashboardScreen';
+import PropertiesScreen from './src/screens/Properties/PropertiesScreen';
+import AddPropertyScreen from './src/screens/Properties/AddPropertyScreen';
+import PropertyDetailsScreen from './src/screens/Properties/PropertyDetailsScreen';
+import AlertsScreen from './src/screens/Alerts/AlertsScreen';
+import ProfileScreen from './src/screens/Profile/ProfileScreen';
 
 // Auth Context
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';

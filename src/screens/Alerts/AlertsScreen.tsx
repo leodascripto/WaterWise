@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { apiService, Alert as AlertType } from '../services/apiService';
+import { apiService, Alert as AlertType } from '../../services/apiService';
 
 export default function AlertsScreen() {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -126,10 +126,6 @@ export default function AlertsScreen() {
     }
   };
 
-  const severityOptions = [
-    { key: 'ALL', label: 'Todos' },
-    { key: 'HIGH', label: 'Alto' },
-    { key: 'MEDIUM', label: 'Médio' },
   const severityOptions = [
     { key: 'ALL', label: 'Todos' },
     { key: 'HIGH', label: 'Alto' },

@@ -94,6 +94,36 @@ class ApiService {
     } catch (error) {
       console.error('API Error - getDashboardData:', error);
       // Return mock data for demo purposes
+      return {
+        totalProperties: 5,
+        activeAlerts: 2,
+        avgSoilMoisture: 65,
+        weatherForecast: 'Chuva moderada nas próximas 6h',
+        riskLevel: 'MEDIUM',
+        recentAlerts: [
+          {
+            id: '1',
+            propertyId: '1',
+            propertyName: 'Fazenda São Pedro',
+            message: 'Umidade do solo baixa detectada',
+            severity: 'HIGH',
+            timestamp: '10 min atrás',
+            isRead: false,
+            type: 'SOIL_MOISTURE',
+          },
+        ],
+      };
+    }
+  }
+
+  // Properties endpoints
+  async getProperties(): Promise<Property[]> {
+    try {
+      const response = await api.get('/properties');
+      return response.data;
+    } catch (error) {
+      console.error('API Error - getProperties:', error);
+      // Return mock data for demo purposes
       return [
         {
           id: '1',
@@ -333,34 +363,4 @@ class ApiService {
   }
 }
 
-export const apiService = new ApiService(); {
-        totalProperties: 5,
-        activeAlerts: 2,
-        avgSoilMoisture: 65,
-        weatherForecast: 'Chuva moderada nas próximas 6h',
-        riskLevel: 'MEDIUM',
-        recentAlerts: [
-          {
-            id: '1',
-            propertyId: '1',
-            propertyName: 'Fazenda São Pedro',
-            message: 'Umidade do solo baixa detectada',
-            severity: 'HIGH',
-            timestamp: '10 min atrás',
-            isRead: false,
-            type: 'SOIL_MOISTURE',
-          },
-        ],
-      };
-    }
-  }
-
-  // Properties endpoints
-  async getProperties(): Promise<Property[]> {
-    try {
-      const response = await api.get('/properties');
-      return response.data;
-    } catch (error) {
-      console.error('API Error - getProperties:', error);
-      // Return mock data for demo purposes
-      return
+export const apiService = new ApiService();
