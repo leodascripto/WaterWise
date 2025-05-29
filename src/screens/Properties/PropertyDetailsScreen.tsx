@@ -9,17 +9,41 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
 import { apiService } from '../../services/apiService';
 
 const { width } = Dimensions.get('window');
 
+type Property = {
+  id: string;
+  name: string;
+  location: string;
+  area: number;
+  soilMoisture: number;
+  riskLevel: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  description?: string;
+  lastUpdate: string;
+};
+
+type PropertyDetailsRouteParams = {
+  property: Property;
+};
+
+type RootStackParamList = {
+  PropertyDetails: PropertyDetailsRouteParams;
+  AddProperty: { property: Property };
+};
+
 export default function PropertyDetailsScreen() {
-  const route = useRoute();
-  const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, 'PropertyDetails'>>();
+  const navigation = useNavigation<import('@react-navigation/native').NavigationProp<RootStackParamList>>();
   const { property } = route.params;
-  
+
   const [sensorData, setSensorData] = useState<any>(null);
   const [weatherData, setWeatherData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +110,7 @@ export default function PropertyDetailsScreen() {
     },
   };
 
-  const timeRangeButtons = [
+  const timeRangeButtons: { key: '1h' | '6h' | '24h' | '7d'; label: string }[] = [
     { key: '1h', label: '1h' },
     { key: '6h', label: '6h' },
     { key: '24h', label: '24h' },
@@ -107,12 +131,12 @@ export default function PropertyDetailsScreen() {
             <Text style={styles.propertyName}>{property.name}</Text>
             <Text style={styles.propertyLocation}>{property.location}</Text>
           </View>
-          <TouchableOpacity
+            <TouchableOpacity
             style={styles.editButton}
             onPress={() => navigation.navigate('AddProperty', { property })}
-          >
+            >
             <Ionicons name="pencil" size={20} color="#2E8B57" />
-          </TouchableOpacity>
+            </TouchableOpacity>
         </View>
 
         <View style={styles.propertyStats}>
@@ -193,11 +217,11 @@ export default function PropertyDetailsScreen() {
             <Text style={styles.chartTitle}>Umidade do Solo (%)</Text>
             <LineChart
               data={{
-                labels: sensorData.soilMoisture.slice(0, 6).map((_, i) => 
+                labels: sensorData.soilMoisture.slice(0, 6).map((_: any, i: number) => 
                   selectedTimeRange === '24h' ? `${i * 4}h` : `${i}h`
                 ),
                 datasets: [{
-                  data: sensorData.soilMoisture.slice(0, 6).map(item => item.value),
+                  data: sensorData.soilMoisture.slice(0, 6).map((item: { value: number }) => item.value),
                 }],
               }}
               width={width - 60}
@@ -212,27 +236,27 @@ export default function PropertyDetailsScreen() {
           </View>
 
           {/* Temperature Chart */}
-          <View style={styles.chartContainer}>
+            <View style={styles.chartContainer}>
             <Text style={styles.chartTitle}>Temperatura (°C)</Text>
             <LineChart
               data={{
-                labels: sensorData.temperature.slice(0, 6).map((_, i) => 
-                  selectedTimeRange === '24h' ? `${i * 4}h` : `${i}h`
-                ),
-                datasets: [{
-                  data: sensorData.temperature.slice(0, 6).map(item => item.value),
-                }],
+              labels: sensorData.temperature.slice(0, 6).map((_: { value: number }, i: number) => 
+                selectedTimeRange === '24h' ? `${i * 4}h` : `${i}h`
+              ),
+              datasets: [{
+                data: sensorData.temperature.slice(0, 6).map((item: { value: number }) => item.value),
+              }],
               }}
               width={width - 60}
               height={200}
               chartConfig={{
-                ...chartConfig,
-                color: (opacity = 1) => `rgba(255, 152, 0, ${opacity})`,
+              ...chartConfig,
+              color: (opacity: number = 1) => `rgba(255, 152, 0, ${opacity})`,
               }}
               bezier
               style={styles.chart}
             />
-          </View>
+            </View>
         </View>
       )}
 

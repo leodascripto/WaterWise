@@ -1,24 +1,27 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { initializeApp } from 'firebase/app';
+// import { auth } from '../config/firebase.config';
+
 import {
-  getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  getAuth,
   User,
 } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+
 
 // Firebase config - Replace with your actual config
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "waterwise-app.firebaseapp.com",
-  projectId: "waterwise-app",
-  storageBucket: "waterwise-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id"
+  apiKey: "AIzaSyAf0iSGpvKmCGHxutyvBsw4dvNXt-kCzaQ",
+  authDomain: "waterwise-app-29b7d.firebaseapp.com",
+  projectId: "waterwise-app-29b7d",
+  storageBucket: "waterwise-app-29b7d.firebasestorage.app",
+  messagingSenderId: "500572611978",
+  appId: "1:500572611978:web:161a1b588c96c127319473",
+  measurementId: "G-F701ZNJ0FB"
 };
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

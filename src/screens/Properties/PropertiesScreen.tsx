@@ -11,6 +11,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Properties: undefined;
+  AddProperty: { property?: Property } | undefined;
+  PropertyDetails: { property: Property };
+};
+
+type PropertiesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Properties'>;
 import { apiService } from '../../services/apiService';
 
 interface Property {
@@ -19,7 +28,7 @@ interface Property {
   location: string;
   area: number;
   soilMoisture: number;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: string;
   lastUpdate: string;
   coordinates: {
     latitude: number;
@@ -28,7 +37,7 @@ interface Property {
 }
 
 export default function PropertiesScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<PropertiesScreenNavigationProp>();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);

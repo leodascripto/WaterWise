@@ -5,268 +5,342 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
+  Image
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from '@firebase/auth';
+import { auth } from '../../config/firebase.config';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-export default function LoginScreen() {
+const LoginScreen = () => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
-
-  const handleAuth = async () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
-    if (isSignUp && password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
-      return;
-    }
-
     setLoading(true);
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-        Alert.alert('Sucesso', 'Conta criada com sucesso!');
-      } else {
-        await signIn(email, password);
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      // Navegação será tratada pelo listener de autenticação
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Ocorreu um erro durante a autenticação');
+      let message = 'Erro ao fazer login';
+      
+      switch (error.code) {
+        case 'auth/invalid-email':
+          message = 'Email inválido';
+          break;
+        case 'auth/user-not-found':
+          message = 'Usuário não encontrado';
+          break;
+        case 'auth/wrong-password':
+          message = 'Senha incorreta';
+          break;
+        case 'auth/too-many-requests':
+          message = 'Muitas tentativas. Tente novamente mais tarde';
+          break;
+        default:
+          message = error.message;
+      }
+      
+      Alert.alert('Erro', message);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Image 
-            source={{ uri: 'https://via.placeholder.com/120x120/2E8B57/ffffff?text=💧' }}
-            style={styles.logo}
-          />
-          <Text style={styles.title}>WaterWise</Text>
-          <Text style={styles.subtitle}>
-            Sistema Inteligente de Prevenção a Enchentes
-          </Text>
-        </View>
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Aviso', 'Digite seu email para recuperar a senha');
+      return;
+    }
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#999"
-            />
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        'Sucesso',
+        'Email de recuperação enviado! Verifique sua caixa de entrada.'
+      );
+    } catch (error: any) {
+      Alert.alert('Erro', 'Erro ao enviar email de recuperação');
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Logo e Título */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Ionicons name="water" size={80} color="#0066CC" />
+            </View>
+            <Text style={styles.title}>WaterWise</Text>
+            <Text style={styles.subtitle}>
+              Sistema Inteligente de Prevenção a Enchentes
+            </Text>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.inputPassword}
-              placeholder="Senha"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#999"
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
-              <Ionicons 
-                name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                size={20} 
-                color="#666" 
+          {/* Formulário */}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="mail-outline"
+                size={20}
+                color="#666"
+                style={styles.inputIcon}
               />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color="#666"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Senha"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color="#666"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={handleForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ou</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Register' as never)}
+            >
+              <Text style={styles.registerButtonText}>
+                Criar nova conta
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {isSignUp && (
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Confirmar Senha"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showPassword}
-                placeholderTextColor="#999"
-              />
-            </View>
-          )}
-
-          <TouchableOpacity 
-            style={[styles.authButton, loading && styles.authButtonDisabled]}
-            onPress={handleAuth}
-            disabled={loading}
-          >
-            <Text style={styles.authButtonText}>
-              {loading ? 'Carregando...' : isSignUp ? 'Criar Conta' : 'Entrar'}
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Protegendo comunidades através da tecnologia
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.switchButton}
-            onPress={() => setIsSignUp(!isSignUp)}
-          >
-            <Text style={styles.switchButtonText}>
-              {isSignUp 
-                ? 'Já tem uma conta? Faça login' 
-                : 'Não tem conta? Cadastre-se'
-              }
+            <Text style={styles.footerSubtext}>
+              Global Solution 2025 - FIAP
             </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Protegendo comunidades através da tecnologia
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F0F8FF',
   },
-  scrollContainer: {
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 24,
     justifyContent: 'center',
-    padding: 20,
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
   },
-  logo: {
+  logoContainer: {
     width: 120,
     height: 120,
+    backgroundColor: '#E6F3FF',
     borderRadius: 60,
-    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E8B57',
-    marginBottom: 10,
+    color: '#0066CC',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    lineHeight: 22,
+    paddingHorizontal: 20,
   },
   form: {
-    marginBottom: 30,
+    marginBottom: 40,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 50,
+    height: 56,
     fontSize: 16,
     color: '#333',
-  },
-  inputPassword: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#333',
-    paddingRight: 40,
   },
   eyeIcon: {
-    position: 'absolute',
-    right: 16,
-    padding: 4,
+    padding: 8,
   },
-  authButton: {
-    backgroundColor: '#2E8B57',
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    color: '#0066CC',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  loginButton: {
+    backgroundColor: '#0066CC',
     borderRadius: 12,
-    paddingVertical: 16,
+    height: 56,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#2E8B57',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#0066CC',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowRadius: 4,
   },
-  authButtonDisabled: {
-    backgroundColor: '#ccc',
+  loginButtonDisabled: {
+    opacity: 0.7,
   },
-  authButtonText: {
-    color: '#fff',
+  loginButtonText: {
+    color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  switchButton: {
+  divider: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    marginVertical: 24,
   },
-  switchButtonText: {
-    color: '#2E8B57',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#DDD',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#999',
+    fontSize: 14,
+  },
+  registerButton: {
+    borderWidth: 2,
+    borderColor: '#0066CC',
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  registerButtonText: {
+    color: '#0066CC',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   footer: {
     alignItems: 'center',
+    marginTop: 'auto',
+    paddingBottom: 20,
   },
   footerText: {
+    color: '#666',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  footerSubtext: {
     color: '#999',
-    fontSize: 14,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontSize: 11,
   },
 });
+
+export default LoginScreen;

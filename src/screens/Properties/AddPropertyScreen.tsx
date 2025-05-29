@@ -11,8 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { apiService } from '../services/apiService';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { apiService } from '../../services/apiService';
 
 interface PropertyForm {
   name: string;
@@ -23,9 +23,27 @@ interface PropertyForm {
   description: string;
 }
 
+// Define the type for the property object (adjust fields as needed)
+interface Property {
+  id: string;
+  name: string;
+  location: string;
+  area: number;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  description?: string;
+}
+
+// Define the route params type
+type AddPropertyScreenRouteParams = {
+  property?: Property;
+};
+
 export default function AddPropertyScreen() {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<RouteProp<Record<string, AddPropertyScreenRouteParams>, string>>();
   const existingProperty = route.params?.property;
   const isEditing = !!existingProperty;
 

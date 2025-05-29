@@ -21,7 +21,7 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  const { user, property, logout, updateUser } = useAuth();
+  const { user, logout } = useAuth();
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const [settings, setSettings] = useState({
@@ -194,9 +194,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   </View>
                 </TouchableOpacity>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{user?.nome}</Text>
+                  <Text style={styles.profileName}>{user?.displayName ?? 'Usuário'}</Text>
                   <Text style={styles.profileEmail}>{user?.email}</Text>
-                  <Text style={styles.profileProperty}>{property?.nome}</Text>
                 </View>
               </LinearGradient>
             </View>
