@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-// import { auth } from '../config/firebase.config';
-
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -8,9 +6,11 @@ import {
   onAuthStateChanged,
   getAuth,
   User,
+  initializeAuth,
+  getReactNativePersistence,
 } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase config - Replace with your actual config
 const firebaseConfig = {
@@ -22,9 +22,14 @@ const firebaseConfig = {
   appId: "1:500572611978:web:161a1b588c96c127319473",
   measurementId: "G-F701ZNJ0FB"
 };
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
+// Initialize Auth with AsyncStorage persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
 
 interface AuthContextType {
   user: User | null;
@@ -50,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
       setUser(user);
       setLoading(false);
     });
@@ -59,32 +65,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      setLoading(true);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful:', result.user.email);
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      setLoading(true);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Sign up successful:', result.user.email);
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
+      setLoading(true);
       await signOut(auth);
+      console.log('Logout successful');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     signIn,

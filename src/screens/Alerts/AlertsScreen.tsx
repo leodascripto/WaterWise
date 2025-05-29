@@ -10,6 +10,7 @@ import {
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { apiService, Alert as AlertType } from '../../services/apiService';
 
 export default function AlertsScreen() {
@@ -135,61 +136,65 @@ export default function AlertsScreen() {
 
   const renderAlert = ({ item }: { item: AlertType }) => (
     <TouchableOpacity
-      style={[
-        styles.alertCard,
-        !item.isRead && styles.alertCardUnread,
-        { borderLeftColor: getSeverityColor(item.severity) }
-      ]}
+      style={styles.alertCard}
       onPress={() => !item.isRead && handleMarkAsRead(item.id)}
     >
-      <View style={styles.alertHeader}>
-        <View style={styles.alertIcons}>
-          <Ionicons 
-            name={getTypeIcon(item.type)} 
-            size={20} 
-            color={getSeverityColor(item.severity)} 
-          />
-          <Ionicons 
-            name={getSeverityIcon(item.severity)} 
-            size={16} 
-            color={getSeverityColor(item.severity)}
-            style={styles.severityIcon}
-          />
-        </View>
-        <View style={styles.alertActions}>
-          {!item.isRead && (
+      <LinearGradient
+        colors={item.isRead ? ['#2D2D2D', '#3D3D3D'] : ['#3D3D3D', '#4D4D4D']}
+        style={[
+          styles.alertCardGradient,
+          { borderLeftColor: getSeverityColor(item.severity) }
+        ]}
+      >
+        <View style={styles.alertHeader}>
+          <View style={styles.alertIcons}>
+            <Ionicons 
+              name={getTypeIcon(item.type)} 
+              size={20} 
+              color={getSeverityColor(item.severity)} 
+            />
+            <Ionicons 
+              name={getSeverityIcon(item.severity)} 
+              size={16} 
+              color={getSeverityColor(item.severity)}
+              style={styles.severityIcon}
+            />
+          </View>
+          <View style={styles.alertActions}>
+            {!item.isRead && (
+              <TouchableOpacity
+                style={styles.markReadButton}
+                onPress={() => handleMarkAsRead(item.id)}
+              >
+                <Ionicons name="checkmark-circle" size={20} color="#28a745" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              style={styles.markReadButton}
-              onPress={() => handleMarkAsRead(item.id)}
+              style={styles.deleteButton}
+              onPress={() => handleDeleteAlert(item.id, item.message)}
             >
-              <Ionicons name="checkmark-circle" size={20} color="#28a745" />
+              <Ionicons name="trash" size={18} color="#dc3545" />
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeleteAlert(item.id, item.message)}
-          >
-            <Ionicons name="trash" size={18} color="#dc3545" />
-          </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.alertContent}>
-        <Text style={styles.propertyName}>{item.propertyName}</Text>
-        <Text style={[styles.alertMessage, !item.isRead && styles.alertMessageUnread]}>
-          {item.message}
-        </Text>
-        <View style={styles.alertFooter}>
-          <Text style={styles.alertTime}>{item.timestamp}</Text>
-          {!item.isRead && <View style={styles.unreadIndicator} />}
+        <View style={styles.alertContent}>
+          <Text style={styles.propertyName}>{item.propertyName}</Text>
+          <Text style={[styles.alertMessage, !item.isRead && styles.alertMessageUnread]}>
+            {item.message}
+          </Text>
+          <View style={styles.alertFooter}>
+            <Text style={styles.alertTime}>{item.timestamp}</Text>
+            {!item.isRead && <View style={styles.unreadIndicator} />}
+          </View>
         </View>
-      </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="notifications-off" size={64} color="#ccc" />
+      <Ionicons name="notifications-off" size={64} color="#666" />
       <Text style={styles.emptyTitle}>Nenhum alerta encontrado</Text>
       <Text style={styles.emptySubtitle}>
         {showUnreadOnly 
@@ -204,87 +209,107 @@ export default function AlertsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header with filters */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>
-            Alertas {unreadCount > 0 && `(${unreadCount} não lidos)`}
-          </Text>
-          <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-            <Ionicons name="refresh" size={20} color="#2E8B57" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.filters}>
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Apenas não lidos</Text>
-            <Switch
-              value={showUnreadOnly}
-              onValueChange={setShowUnreadOnly}
-              trackColor={{ false: '#e0e0e0', true: '#2E8B57' }}
-              thumbColor={showUnreadOnly ? '#fff' : '#f4f3f4'}
-            />
-          </View>
-
-          <View style={styles.severityFilter}>
-            {severityOptions.map((option) => (
-              <TouchableOpacity
-                key={option.key}
-                style={[
-                  styles.severityButton,
-                  selectedSeverity === option.key && styles.severityButtonActive
-                ]}
-                onPress={() => setSelectedSeverity(option.key)}
-              >
-                <Text style={[
-                  styles.severityButtonText,
-                  selectedSeverity === option.key && styles.severityButtonTextActive
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* Alerts List */}
-      <FlatList
-        data={filteredAlerts}
-        renderItem={renderAlert}
-        keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={renderEmptyState}
-      />
-
-      {/* Quick Actions */}
-      {unreadCount > 0 && (
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={async () => {
-              try {
-                const unreadAlerts = alerts.filter(alert => !alert.isRead);
-                await Promise.all(
-                  unreadAlerts.map(alert => apiService.markAlertAsRead(alert.id))
-                );
-                setAlerts(prev => 
-                  prev.map(alert => ({ ...alert, isRead: true }))
-                );
-              } catch (error) {
-                Alert.alert('Erro', 'Não foi possível marcar todos como lidos');
-              }
-            }}
+      <LinearGradient
+        colors={['#1A1A1A', '#2D2D2D']}
+        style={styles.gradient}
+      >
+        {/* Header with filters */}
+        <View style={styles.header}>
+          <LinearGradient
+            colors={['#2D2D2D', '#3D3D3D']}
+            style={styles.headerGradient}
           >
-            <Ionicons name="checkmark-done" size={20} color="#fff" />
-            <Text style={styles.quickActionText}>Marcar todos como lidos</Text>
-          </TouchableOpacity>
+            <View style={styles.headerTop}>
+              <Text style={styles.headerTitle}>
+                Alertas {unreadCount > 0 && `(${unreadCount} não lidos)`}
+              </Text>
+              <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+                <Ionicons name="refresh" size={20} color="#00FFCC" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.filters}>
+              <View style={styles.switchContainer}>
+                <Text style={styles.switchLabel}>Apenas não lidos</Text>
+                <Switch
+                  value={showUnreadOnly}
+                  onValueChange={setShowUnreadOnly}
+                  trackColor={{ false: '#3D3D3D', true: '#00FFCC' }}
+                  thumbColor={showUnreadOnly ? '#FFFFFF' : '#CCCCCC'}
+                />
+              </View>
+
+              <View style={styles.severityFilter}>
+                {severityOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[
+                      styles.severityButton,
+                      selectedSeverity === option.key && styles.severityButtonActive
+                    ]}
+                    onPress={() => setSelectedSeverity(option.key)}
+                  >
+                    <Text style={[
+                      styles.severityButtonText,
+                      selectedSeverity === option.key && styles.severityButtonTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </LinearGradient>
         </View>
-      )}
+
+        {/* Alerts List */}
+        <FlatList
+          data={filteredAlerts}
+          renderItem={renderAlert}
+          keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#00FFCC"
+              colors={['#00FFCC']}
+            />
+          }
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+        />
+
+        {/* Quick Actions */}
+        {unreadCount > 0 && (
+          <View style={styles.quickActions}>
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              onPress={async () => {
+                try {
+                  const unreadAlerts = alerts.filter(alert => !alert.isRead);
+                  await Promise.all(
+                    unreadAlerts.map(alert => apiService.markAlertAsRead(alert.id))
+                  );
+                  setAlerts(prev => 
+                    prev.map(alert => ({ ...alert, isRead: true }))
+                  );
+                } catch (error) {
+                  Alert.alert('Erro', 'Não foi possível marcar todos como lidos');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#00FFCC', '#00D4AA']}
+                style={styles.quickActionGradient}
+              >
+                <Ionicons name="checkmark-done" size={20} color="#1A1A1A" />
+                <Text style={styles.quickActionText}>Marcar todos como lidos</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+      </LinearGradient>
     </View>
   );
 }
@@ -292,15 +317,21 @@ export default function AlertsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1A1A1A',
+  },
+  gradient: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#3D3D3D',
+  },
+  headerGradient: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3D3D3D',
   },
   headerTop: {
     flexDirection: 'row',
@@ -311,7 +342,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
   },
   refreshButton: {
     padding: 8,
@@ -326,7 +357,7 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     fontSize: 16,
-    color: '#333',
+    color: '#FFFFFF',
   },
   severityFilter: {
     flexDirection: 'row',
@@ -336,38 +367,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#3D3D3D',
   },
   severityButtonActive: {
-    backgroundColor: '#2E8B57',
+    backgroundColor: '#00FFCC',
   },
   severityButtonText: {
     fontSize: 14,
-    color: '#666',
+    color: '#CCCCCC',
     fontWeight: '500',
   },
   severityButtonTextActive: {
-    color: '#fff',
+    color: '#1A1A1A',
   },
   listContainer: {
     padding: 16,
     paddingBottom: 100,
   },
   alertCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  alertCardUnread: {
-    backgroundColor: '#fefefe',
-    elevation: 3,
+  alertCardGradient: {
+    padding: 16,
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: '#3D3D3D',
+    borderRadius: 12,
   },
   alertHeader: {
     flexDirection: 'row',
@@ -398,12 +425,12 @@ const styles = StyleSheet.create({
   propertyName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E8B57',
+    color: '#00FFCC',
     marginBottom: 4,
   },
   alertMessage: {
     fontSize: 16,
-    color: '#333',
+    color: '#FFFFFF',
     lineHeight: 22,
     marginBottom: 8,
   },
@@ -417,13 +444,13 @@ const styles = StyleSheet.create({
   },
   alertTime: {
     fontSize: 12,
-    color: '#999',
+    color: '#CCCCCC',
   },
   unreadIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2E8B57',
+    backgroundColor: '#00FFCC',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -433,13 +460,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: '#CCCCCC',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#999',
+    color: '#888888',
     textAlign: 'center',
   },
   quickActions: {
@@ -449,21 +476,18 @@ const styles = StyleSheet.create({
     right: 20,
   },
   quickActionButton: {
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  quickActionGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2E8B57',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 25,
-    elevation: 6,
-    shadowColor: '#2E8B57',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   quickActionText: {
-    color: '#fff',
+    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

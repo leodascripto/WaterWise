@@ -4,9 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
 
-// Screens - Updated imports with correct paths
+// Screens
+import WelcomeScreen from './src/screens/Welcome/WelcomeScreen';
 import LoginScreen from './src/screens/Auth/LoginScreen';
+import RegisterUserScreen from './src/screens/Auth/RegisterUserScreen';
+import RegisterAddressScreen from './src/screens/Auth/RegisterAddressScreen';
 import DashboardScreen from './src/screens/Dashboard/DashboardScreen';
 import PropertiesScreen from './src/screens/Properties/PropertiesScreen';
 import AddPropertyScreen from './src/screens/Properties/AddPropertyScreen';
@@ -41,12 +45,17 @@ function MainTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2E8B57',
-        tabBarInactiveTintColor: 'gray',
-        headerStyle: {
-          backgroundColor: '#2E8B57',
+        tabBarActiveTintColor: '#00FFCC',
+        tabBarInactiveTintColor: '#666666',
+        tabBarStyle: {
+          backgroundColor: '#1A1A1A',
+          borderTopColor: '#2D2D2D',
+          borderTopWidth: 1,
         },
-        headerTintColor: '#fff',
+        headerStyle: {
+          backgroundColor: '#1A1A1A',
+        },
+        headerTintColor: '#FFFFFF',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
@@ -80,49 +89,79 @@ function AppNavigator() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // You could add a loading screen here
+    return (
+      <View style={{ flex: 1, backgroundColor: '#1A1A1A' }}>
+        {/* Loading screen with proper background */}
+      </View>
+    );
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <>
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen 
-            name="AddProperty" 
-            component={AddPropertyScreen}
-            options={{
-              headerShown: true,
-              title: 'Nova Propriedade',
-              headerStyle: { backgroundColor: '#2E8B57' },
-              headerTintColor: '#fff',
-            }}
-          />
-          <Stack.Screen 
-            name="PropertyDetails" 
-            component={PropertyDetailsScreen}
-            options={{
-              headerShown: true,
-              title: 'Detalhes da Propriedade',
-              headerStyle: { backgroundColor: '#2E8B57' },
-              headerTintColor: '#fff',
-            }}
-          />
-        </>
-      ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
-    </Stack.Navigator>
+    <NavigationContainer
+      theme={{
+        dark: true,
+        colors: {
+          primary: '#00FFCC',
+          background: '#1A1A1A',
+          card: '#2D2D2D',
+          text: '#FFFFFF',
+          border: '#3D3D3D',
+          notification: '#00FFCC',
+        },
+      }}
+    >
+      <Stack.Navigator 
+        screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: '#1A1A1A' },
+        }}
+      >
+        {user ? (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen 
+              name="AddProperty" 
+              component={AddPropertyScreen}
+              options={{
+                headerShown: true,
+                title: 'Nova Propriedade',
+                headerStyle: { backgroundColor: '#1A1A1A' },
+                headerTintColor: '#FFFFFF',
+              }}
+            />
+            <Stack.Screen 
+              name="PropertyDetails" 
+              component={PropertyDetailsScreen}
+              options={{
+                headerShown: true,
+                title: 'Detalhes da Propriedade',
+                headerStyle: { backgroundColor: '#1A1A1A' },
+                headerTintColor: '#FFFFFF',
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterUserScreen} />
+            <Stack.Screen name="RegisterAddress" component={RegisterAddressScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="light" backgroundColor="#2E8B57" />
+    <>
+      {/* Status bar background fix for edge-to-edge */}
+      <View style={{ flex: 0, backgroundColor: '#1A1A1A' }} />
+      <AuthProvider>
+        <StatusBar style="light" />
         <AppNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+      </AuthProvider>
+    </>
   );
 }

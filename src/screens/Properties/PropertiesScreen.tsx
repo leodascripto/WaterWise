@@ -10,6 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
@@ -159,99 +160,124 @@ export default function PropertiesScreen() {
       style={styles.propertyCard}
       onPress={() => navigation.navigate('PropertyDetails', { property: item })}
     >
-      <View style={styles.propertyHeader}>
-        <View style={styles.propertyInfo}>
-          <Text style={styles.propertyName}>{item.name}</Text>
-          <Text style={styles.propertyLocation}>{item.location}</Text>
-        </View>
-        <View style={styles.propertyActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AddProperty', { property: item })}
-          >
-            <Ionicons name="pencil" size={18} color="#2E8B57" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDeleteProperty(item.id, item.name)}
-          >
-            <Ionicons name="trash" size={18} color="#dc3545" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.propertyStats}>
-        <View style={styles.statItem}>
-          <Ionicons name="resize-outline" size={16} color="#666" />
-          <Text style={styles.statText}>{item.area} ha</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="water-outline" size={16} color="#2196f3" />
-          <Text style={styles.statText}>{item.soilMoisture}%</Text>
-        </View>
-        <View style={styles.statItem}>
-          <View style={[
-            styles.riskBadge,
-            { backgroundColor: getRiskColor(item.riskLevel) }
-          ]}>
-            <Text style={styles.riskText}>{getRiskText(item.riskLevel)}</Text>
+      <LinearGradient
+        colors={['#2D2D2D', '#3D3D3D']}
+        style={styles.propertyCardGradient}
+      >
+        <View style={styles.propertyHeader}>
+          <View style={styles.propertyInfo}>
+            <Text style={styles.propertyName}>{item.name}</Text>
+            <Text style={styles.propertyLocation}>{item.location}</Text>
+          </View>
+          <View style={styles.propertyActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AddProperty', { property: item })}
+            >
+              <Ionicons name="pencil" size={18} color="#00FFCC" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleDeleteProperty(item.id, item.name)}
+            >
+              <Ionicons name="trash" size={18} color="#dc3545" />
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
 
-      <View style={styles.propertyFooter}>
-        <Text style={styles.lastUpdate}>Última atualização: {item.lastUpdate}</Text>
-        <Ionicons name="chevron-forward" size={16} color="#ccc" />
-      </View>
+        <View style={styles.propertyStats}>
+          <View style={styles.statItem}>
+            <Ionicons name="resize-outline" size={16} color="#CCCCCC" />
+            <Text style={styles.statText}>{item.area} ha</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Ionicons name="water-outline" size={16} color="#2196f3" />
+            <Text style={styles.statText}>{item.soilMoisture}%</Text>
+          </View>
+          <View style={styles.statItem}>
+            <View style={[
+              styles.riskBadge,
+              { backgroundColor: getRiskColor(item.riskLevel) }
+            ]}>
+              <Text style={styles.riskText}>{getRiskText(item.riskLevel)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.propertyFooter}>
+          <Text style={styles.lastUpdate}>Última atualização: {item.lastUpdate}</Text>
+          <Ionicons name="chevron-forward" size={16} color="#666" />
+        </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar propriedades..."
-            value={searchText}
-            onChangeText={setSearchText}
-            placeholderTextColor="#999"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <FlatList
-        data={filteredProperties}
-        renderItem={renderProperty}
-        keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="location-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyTitle}>Nenhuma propriedade encontrada</Text>
-            <Text style={styles.emptySubtitle}>
-              {searchText ? 'Tente uma busca diferente' : 'Adicione sua primeira propriedade'}
-            </Text>
-          </View>
-        }
-      />
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('AddProperty')}
+      <LinearGradient
+        colors={['#1A1A1A', '#2D2D2D']}
+        style={styles.gradient}
       >
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+        <View style={styles.header}>
+          <View style={styles.searchContainer}>
+            <LinearGradient
+              colors={['#2D2D2D', '#3D3D3D']}
+              style={styles.searchGradient}
+            >
+              <Ionicons name="search" size={20} color="#CCCCCC" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar propriedades..."
+                value={searchText}
+                onChangeText={setSearchText}
+                placeholderTextColor="#888888"
+              />
+              {searchText.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchText('')}>
+                  <Ionicons name="close-circle" size={20} color="#CCCCCC" />
+                </TouchableOpacity>
+              )}
+            </LinearGradient>
+          </View>
+        </View>
+
+        <FlatList
+          data={filteredProperties}
+          renderItem={renderProperty}
+          keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#00FFCC"
+              colors={['#00FFCC']}
+            />
+          }
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="location-outline" size={64} color="#666" />
+              <Text style={styles.emptyTitle}>Nenhuma propriedade encontrada</Text>
+              <Text style={styles.emptySubtitle}>
+                {searchText ? 'Tente uma busca diferente' : 'Adicione sua primeira propriedade'}
+              </Text>
+            </View>
+          }
+        />
+
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('AddProperty')}
+        >
+          <LinearGradient
+            colors={['#00FFCC', '#00D4AA']}
+            style={styles.fabGradient}
+          >
+            <Ionicons name="add" size={28} color="#1A1A1A" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 }
@@ -259,21 +285,28 @@ export default function PropertiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1A1A1A',
+  },
+  gradient: {
+    flex: 1,
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#3D3D3D',
   },
   searchContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  searchGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#3D3D3D',
+    borderRadius: 12,
   },
   searchIcon: {
     marginRight: 8,
@@ -281,23 +314,23 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#FFFFFF',
     paddingVertical: 4,
   },
   listContainer: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 100,
   },
   propertyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  propertyCardGradient: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#3D3D3D',
+    borderRadius: 12,
   },
   propertyHeader: {
     flexDirection: 'row',
@@ -311,12 +344,12 @@ const styles = StyleSheet.create({
   propertyName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   propertyLocation: {
     fontSize: 14,
-    color: '#666',
+    color: '#CCCCCC',
   },
   propertyActions: {
     flexDirection: 'row',
@@ -332,7 +365,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#3D3D3D',
   },
   statItem: {
     flexDirection: 'row',
@@ -340,7 +373,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 14,
-    color: '#666',
+    color: '#CCCCCC',
     marginLeft: 4,
   },
   riskBadge: {
@@ -360,7 +393,7 @@ const styles = StyleSheet.create({
   },
   lastUpdate: {
     fontSize: 12,
-    color: '#999',
+    color: '#888888',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -370,13 +403,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: '#CCCCCC',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#999',
+    color: '#888888',
     textAlign: 'center',
   },
   fab: {
@@ -386,13 +419,12 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2E8B57',
+    overflow: 'hidden',
+  },
+  fabGradient: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#2E8B57',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
 });
